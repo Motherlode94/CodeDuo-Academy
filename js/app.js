@@ -1,4 +1,66 @@
-(()=>{'use strict';const $=id=>document.getElementById(id);const samples={javascript:"// Premier programme\nconst prenom = 'CodeDuo';\nlet points = 5;\nconsole.log('Bienvenue ' + prenom);\nconsole.log('Points :', points + 3);",html:"<h1>Bonjour CodeDuo !</h1>\n<p>Ma première page web.</p>\n<button onclick=\"document.querySelector('p').textContent='Bravo !'\">Clique ici</button>",csharp:"using UnityEngine;\n\npublic class HelloWorld : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log(\"Bonjour CodeDuo !\");\n    }\n}"};let profile=localStorage.getItem('codeduo-demo-profile')||'';const code=$('editor'),lang=$('language'),pre=$('highlight'),highlight=$('highlightCode');const getLang=()=>lang.value==='html'?'markup':lang.value==='csharp'?'csharp':'javascript';function paint(){let src=code.value+'\n';const l=getLang();if(window.Prism?.languages?.[l])highlight.innerHTML=Prism.highlight(src,Prism.languages[l],l);else highlight.textContent=src}function setLanguage(name){lang.value=name;$('filelabel').textContent=name==='html'?'index.html':name==='csharp'?'HelloWorld.cs':'main.js';code.value=localStorage.getItem('codeduo-code-'+name)||samples[name];paint();$('preview').hidden=true;$('output').hidden=false;$('output').textContent='Prêt à exécuter.'}lang.onchange=()=>setLanguage(lang.value);code.addEventListener('input',()=>{localStorage.setItem('codeduo-code-'+lang.value,code.value);paint()});code.addEventListener('scroll',()=>{pre.scrollTop=code.scrollTop;pre.scrollLeft=code.scrollLeft});code.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();code.setRangeText('    ',code.selectionStart,code.selectionEnd,'end');code.dispatchEvent(new Event('input'))}});$('clearOutput').onclick=()=>{$('output').textContent='';$('preview').srcdoc='';$('output').hidden=false;$('preview').hidden=true};
+(()=>{'use strict';const $=id=>document.getElementById(id);
+const storage = {
+ getItem(key) { try { return window.localStorage.getItem(key); } catch { return null; } },
+ setItem(key, value) { try { window.localStorage.setItem(key, value); return true; } catch { return false; } },
+ removeItem(key) { try { window.localStorage.removeItem(key); } catch {} }
+};const samples={javascript:"// Premier programme\nconst prenom = 'CodeDuo';\nlet points = 5;\nconsole.log('Bienvenue ' + prenom);\nconsole.log('Points :', points + 3);",html:"<h1>Bonjour CodeDuo !</h1>\n<p>Ma première page web.</p>\n<button onclick=\"document.querySelector('p').textContent='Bravo !'\">Clique ici</button>",csharp:"using UnityEngine;\n\npublic class HelloWorld : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log(\"Bonjour CodeDuo !\");\n    }\n}"};let profile=storage.getItem('codeduo-demo-profile')||'';const code=$('editor'),lang=$('language'),pre=$('highlight'),highlight=$('highlightCode');const getLang=()=>lang.value==='html'?'markup':lang.value==='csharp'?'csharp':'javascript';function paint(){let src=code.value+'\n';const l=getLang();if(window.Prism?.languages?.[l])highlight.innerHTML=Prism.highlight(src,Prism.languages[l],l);else highlight.textContent=src}function setLanguage(name){lang.value=name;$('filelabel').textContent=name==='html'?'index.html':name==='csharp'?'HelloWorld.cs':'main.js';code.value=storage.getItem('codeduo-code-'+name)??samples[name];paint();$('preview').hidden=true;$('output').hidden=false;$('output').textContent='Prêt à exécuter.'}lang.onchange=()=>setLanguage(lang.value);code.addEventListener('input',()=>{const saved=storage.setItem('codeduo-code-'+lang.value,code.value);$('saveStatus').textContent=saved?'Brouillon enregistré sur cet appareil':'Sauvegarde indisponible : exporte ton code pour le conserver';paint()});code.addEventListener('scroll',()=>{pre.scrollTop=code.scrollTop;pre.scrollLeft=code.scrollLeft});code.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();code.setRangeText('    ',code.selectionStart,code.selectionEnd,'end');code.dispatchEvent(new Event('input'))}});$('clearOutput').onclick=()=>{$('output').textContent='';$('preview').srcdoc='';$('output').hidden=false;$('preview').hidden=true};
 $('execute').onclick=()=>{const language=lang.value;const source=code.value;if(language==='csharp'){$('preview').hidden=true;$('output').hidden=false;$('output').textContent='C# : lecture et coloration syntaxique uniquement. Un véritable compilateur C#/.NET côté serveur est nécessaire pour l’exécuter.';return}if(language==='html'){$('output').hidden=true;$('preview').hidden=false;$('preview').srcdoc=source;return} $('preview').hidden=true;$('output').hidden=false;$('output').textContent='Exécution JavaScript isolée…';const iframe=document.createElement('iframe');iframe.sandbox='allow-scripts';iframe.style.display='none';document.body.appendChild(iframe);let token='cd_'+Math.random().toString(36).slice(2),lines=[],done=false;const render=()=>{$('output').textContent=lines.join('\n')||'(Aucune sortie console)'};const onMessage=e=>{if(e.source!==iframe.contentWindow||e.data?.token!==token)return;if(e.data.type==='line'){lines.push(String(e.data.text));render()}if(e.data.type==='done'){done=true;cleanup()}};const cleanup=()=>{window.removeEventListener('message',onMessage);iframe.remove()};window.addEventListener('message',onMessage);const payload=JSON.stringify(source).replaceAll('<','\\u003c');iframe.srcdoc='<script>const token='+JSON.stringify(token)+';const send=(type,text)=>parent.postMessage({token,type,text},"*");console.log=(...a)=>send("line",a.map(String).join(" "));console.error=(...a)=>send("line","ERREUR: "+a.map(String).join(" "));window.onerror=(msg)=>send("line","ERREUR: "+msg);try{const fn=new Function('+payload+');const result=fn();if(result&&typeof result.then==="function")result.then(()=>send("done","")).catch(e=>{send("line",String(e));send("done","")});else send("done","")}catch(e){send("line",e.name+": "+e.message);send("done","")}</script>';setTimeout(()=>{if(!done){lines.push('Temps maximal atteint pour ce test.');render();cleanup()}},2000)};
 $('saveCode').onclick=()=>{const ext={javascript:'js',html:'html',csharp:'cs'}[lang.value];const blob=new Blob([code.value],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='codeduo-exercice.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-const modal=$('authModal');function openAuth(){modal.hidden=false;$('studentName').focus()}$('signup').onclick=openAuth;$('enter').onclick=()=>profile?openStudent():openAuth();$('closeAuth').onclick=()=>modal.hidden=true;modal.addEventListener('click',e=>{if(e.target===modal)modal.hidden=true});$('tryLab').onclick=()=>$('atelier').scrollIntoView({behavior:'smooth'});$('authForm').onsubmit=e=>{e.preventDefault();profile=$('studentName').value.trim();if(profile.length<2)return;localStorage.setItem('codeduo-demo-profile',profile);modal.hidden=true;openStudent()};function openStudent(){$('student').hidden=false;$('welcomeName').textContent=profile;document.body.style.overflow='hidden'}function closeStudent(){$('student').hidden=true;document.body.style.overflow=''}$('exitStudent').onclick=closeStudent;$('logout').onclick=()=>{closeStudent();profile='';localStorage.removeItem('codeduo-demo-profile');openAuth()};const lessons=['Exercice 1 : écris une variable let age = 18 puis affiche sa valeur avec console.log(age).','Exercice 2 : crée une fonction double(n) qui retourne n * 2, puis affiche double(7).','Exercice 3 : ajoute une condition if / else qui affiche « majeur » ou « mineur » selon la valeur de age.'];document.querySelectorAll('[data-lesson]').forEach(btn=>btn.onclick=()=>{$('lessonText').textContent=lessons[Number(btn.dataset.lesson)];closeStudent();setLanguage('javascript');$('atelier').scrollIntoView({behavior:'smooth'})});document.addEventListener('pointermove',e=>{const g=$('pointerGlow');g.style.left=e.clientX+'px';g.style.top=e.clientY+'px'},{passive:true});document.addEventListener('keydown',e=>{if(e.key==='Escape'){modal.hidden=true;closeStudent()}});setLanguage('javascript')})();
+const modal=$('authModal');function openAuth(){modal.hidden=false;$('studentName').focus()}$('signup').onclick=()=>openAuth();$('enter').onclick=()=>profile?openStudent():openAuth();$('closeAuth').onclick=()=>modal.hidden=true;modal.addEventListener('click',e=>{if(e.target===modal)modal.hidden=true});$('tryLab').onclick=()=>$('atelier').scrollIntoView({behavior:'smooth'});$('authForm').onsubmit=e=>{e.preventDefault();profile=$('studentName').value.trim();if(profile.length<2)return;storage.setItem('codeduo-demo-profile',profile);modal.hidden=true;openStudent()};function openStudent(){updateProgress();$('student').hidden=false;$('welcomeName').textContent=profile;document.body.style.overflow='hidden'}function closeStudent(){$('student').hidden=true;document.body.style.overflow=''}$('exitStudent').onclick=closeStudent;$('logout').onclick=()=>{closeStudent();profile='';storage.removeItem('codeduo-demo-profile');openAuth()};
+const lessons = [
+ {title:'01 / Les variables', instruction:'Crée une variable age égale à 18, puis affiche sa valeur avec console.log(age).', hint:'Une variable se déclare avec let. Exemple : let points = 5;'},
+ {title:'02 / Les fonctions', instruction:'Crée une fonction double(n) qui retourne n * 2, puis affiche double(7). Le résultat attendu est 14.', hint:'Une fonction peut renvoyer un résultat avec return.'},
+ {title:'03 / Les conditions', instruction:'Déclare age, puis utilise if / else pour afficher « majeur » si age vaut au moins 18, sinon « mineur ». Essaie avec 16 puis 20.', hint:'La comparaison age >= 18 vérifie si l’âge est supérieur ou égal à 18.'}
+];
+let activeLesson = null;
+function completedLessons() {
+ try {
+  const value = JSON.parse(storage.getItem('codeduo-completed') || '[]');
+  return Array.isArray(value) ? [...new Set(value.filter(n => Number.isInteger(n) && n >= 0 && n < lessons.length))] : [];
+ } catch { return []; }
+}
+function updateProgress() {
+ const completed = completedLessons();
+ $('lessonProgress').value = completed.length;
+ $('progressText').textContent = completed.length + ' / 3 exercices marqués comme terminés sur cet appareil.';
+ document.querySelectorAll('[data-lesson]').forEach(btn => {
+  btn.textContent = completed.includes(Number(btn.dataset.lesson)) ? '✓ Revoir l’exercice' : 'Ouvrir l’exercice';
+ });
+}
+document.querySelectorAll('[data-lesson]').forEach(btn => btn.onclick = () => {
+ activeLesson = Number(btn.dataset.lesson);
+ const lesson = lessons[activeLesson];
+ closeStudent();
+ setLanguage('javascript');
+ $('lessonPanel').hidden = false;
+ $('lessonTitle').textContent = lesson.title;
+ $('lessonInstruction').textContent = lesson.instruction;
+ $('lessonHint').textContent = lesson.hint;
+ $('lessonStatus').textContent = completedLessons().includes(activeLesson) ? 'Tu as déjà marqué cet exercice comme terminé.' : 'Teste ton code, puis explique le résultat à ton binôme.';
+ $('atelier').scrollIntoView({behavior:'smooth'});
+ code.focus({preventScroll:true});
+});
+$('completeLesson').onclick = () => {
+ if (activeLesson === null) return;
+ const completed = completedLessons();
+ if (!completed.includes(activeLesson)) completed.push(activeLesson);
+ const saved = storage.setItem('codeduo-completed', JSON.stringify(completed));
+ $('lessonStatus').textContent = saved ? '✓ Exercice marqué comme terminé. Bravo pour ta progression !' : 'Progression non enregistrée : le stockage du navigateur est indisponible.';
+ updateProgress();
+};
+code.addEventListener('keydown', e => {
+ if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); $('execute').click(); }
+});
+let authTrigger;
+const originalOpenAuth = openAuth;
+openAuth = function() { authTrigger = document.activeElement; originalOpenAuth(); };
+function closeAuth() { modal.hidden = true; authTrigger?.focus(); }
+$('closeAuth').onclick = closeAuth;
+modal.addEventListener('keydown', e => {
+ if (e.key !== 'Tab') return;
+ const fields = [...modal.querySelectorAll('button,input')];
+ const first = fields[0], last = fields[fields.length - 1];
+ if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+ else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+document.addEventListener('pointermove',e=>{const g=$('pointerGlow');g.style.left=e.clientX+'px';g.style.top=e.clientY+'px'},{passive:true});document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!modal.hidden)closeAuth();if(!$('student').hidden){closeStudent();$('enter').focus()}}});setLanguage('javascript')})();
