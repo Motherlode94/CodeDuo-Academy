@@ -1,119 +1,149 @@
 # CodeDuo Academy
 
-Plateforme indépendante d’initiation à l’informatique et au code pour deux apprenants.
+**CodeDuo Academy** est une plateforme francophone d'initiation à l'informatique et à la programmation, destinée aux débutants et au travail en binôme.
 
-## Inclus
-- Accueil minimaliste avec effet de suivi de souris et animation décorative.
-- Fenêtre de création de **profil de démonstration local** et tableau de bord étudiant.
-- Atelier de code avec Prism.js, export .js/.html/.cs.
-- Exécution du JavaScript dans une iframe sandboxée et aperçu HTML isolé.
-- Messages de sortie et erreurs JavaScript simples.
-- Exemples C# **sans compilateur C#**.
+- **Site :** https://codeduo-academy.pages.dev/
+- **Code source :** https://github.com/Motherlode94/CodeDuo-Academy
+- **Propriétaire du dépôt :** [@Motherlode94](https://github.com/Motherlode94)
+- **Hébergement :** Cloudflare Pages, déploiements déclenchés par la branche `main`.
 
-## Limites importantes
-La création de profil est locale au navigateur via localStorage : ce n’est pas un système d’inscription sécurisé, il n’y a ni mots de passe, ni comptes serveur, ni synchronisation entre appareils. Pour un vrai espace étudiant individuel avec connexion, rôles et données partagées, il faut un backend d’authentification et une base de données.
+> **État : en développement.** Le dépôt contient une interface pédagogique, un éditeur et des fonctions d'authentification. Leur présence dans le code ne garantit pas qu'elles aient toutes été validées en production. Ne pas considérer le site comme un environnement d'exécution de code non fiable à sécurité garantie.
 
-L’atelier JavaScript est prévu pour des exercices courts. Les boucles infinies, les API réseau et les scripts hostiles ne doivent pas être utilisés. Une véritable compilation C# nécessite une infrastructure serveur (.NET/Roslyn) avec isolation stricte, quotas et sécurité.
+## Fonctionnalités présentes
 
-## Lancer
-Ouvrir `index.html` via un serveur web statique ou publier sur GitHub Pages. Les fichiers doivent rester ensemble :
+| Domaine | Fonctionnalité | État et limites |
+| --- | --- | --- |
+| Accueil | Présentation minimaliste, animation et effet de souris, liens de navigation | Implémenté ; rendu navigateur à vérifier selon les appareils |
+| Cours | **14 chapitres** sur l'informatique, la logique, le Web, JavaScript, Python, C# et Git | Quiz interactifs ; validation locale, pas d'examen certifiant |
+| Projets | **6 défis guidés** pour débutants et binômes | Consignes disponibles ; pas de remise ni de correction serveur |
+| Atelier | Éditeur avec coloration Prism.js et export `.js`, `.html`, `.cs` | Brouillons sauvegardés dans le navigateur, non synchronisés |
+| Exécution | JavaScript et aperçu HTML dans des iframes isolées | Exercices courts uniquement ; ce n'est pas un compilateur universel |
+| C# et Python | Exemples et enseignement | **Pas de compilation/exécution native** dans l'atelier |
+| Comptes | Inscription étudiante, connexion et sessions via Cloudflare Pages Functions + D1 | Authentification à valider de bout en bout après chaque déploiement |
+| Rôles | `student` et `admin` | Inscription publique limitée à `student`; rôle admin attribué hors formulaire |
+| Administration | Contrôle serveur du rôle et liste des utilisateurs | Interface initiale, pas de suite complète de gestion des comptes |
+| Messagerie | Aucun e-mail externe de vérification ou de récupération | À intégrer avec un fournisseur de courrier transactionnel |
 
-```
-index.html
-css/style.css
-js/app.js
-README.md
-```
+## Pages du site
 
-## Publication
-GitHub Pages peut servir ce site en statique depuis la racine du dépôt, une fois Pages activé dans les paramètres GitHub.
+| Chemin | Utilité |
+| --- | --- |
+| `index.html` | Accueil, présentation et laboratoire de code |
+| `cours.html` | Catalogue des 14 chapitres, quiz et progression locale |
+| `projets.html` | Six projets et défis de programmation en binôme |
+| `connexion.html` | Inscription et connexion avec identifiant/mot de passe |
+| `etudiant.html` | Tableau de bord étudiant et changement de mot de passe |
+| `admin.html` | Espace administrateur soumis à vérification du rôle serveur |
 
-## Prochaines étapes
-Authentification réelle, base des élèves, suivi synchronisé, parcours complet, compilation en sandbox de confiance.
-
-## Améliorations du parcours
-- Consigne et indice visibles dans l’atelier pour chacun des trois exercices.
-- Progression déclarative : l’apprenant marque lui-même un exercice terminé ; aucune correction automatique.
-- Brouillons par langage, y compris un brouillon vide, et message si le stockage est indisponible.
-- Raccourci Ctrl/Commande + Entrée, focus clavier visible et navigation au clavier dans la fenêtre de profil.
-- Barre d’outils adaptée aux petits écrans.
-
-Les brouillons et la progression sont communs aux profils locaux sur un même navigateur. Changer de profil ne les efface pas. Prism et les polices utilisent des services externes ; l’éditeur reste utilisable sans coloration si Prism ne se charge pas.
-
-## Contributions : ajouts et modifications
-
-Chaque contributeur décrit ses changements pour que les autres puissent comprendre ce qui a été ajouté, modifié ou corrigé.
-
-### Proposer un changement
-
-1. Partir de la dernière version de `main`.
-2. Créer une branche pour son travail, par exemple `ajout/exercice-html` ou `correction/sauvegarde`. Sans accès en écriture, créer une copie du dépôt avec **Fork**.
-3. Faire les changements et vérifier les fonctions concernées.
-4. Ouvrir une **Pull Request** vers `main` : c’est une proposition de modification à relire avant intégration.
-5. Remplir le modèle ci-dessous et indiquer les tests réellement effectués. Préciser ce qui reste à vérifier.
-6. Après relecture, un responsable du dépôt peut fusionner la proposition dans `main`.
-
-### Modèle à copier dans chaque proposition
+## Structure du dépôt
 
 ```text
-Contributeur : @pseudo-GitHub
-Date : AAAA-MM-JJ
-Type : ajout / modification / correction / documentation
-
-Objectif :
-Pourquoi ce changement est utile.
-
-Ajouts :
-- Nouvelles fonctions ou nouveaux contenus.
-
-Modifications et corrections :
-- Ce qui a changé et le comportement obtenu.
-
-Fichiers concernés :
-- Chemins des fichiers modifiés.
-
-Vérifications effectuées :
-- Test réalisé et résultat.
-- Navigateur et appareil si un test visuel a été effectué.
-
-Limites ou points restant à vérifier :
-- Indiquer les éléments non testés.
-
-Lien vers la proposition ou le commit :
+CodeDuo-Academy/
+├── index.html
+├── cours.html
+├── projets.html
+├── connexion.html
+├── etudiant.html
+├── admin.html
+├── css/
+│   ├── style.css
+│   ├── learning.css
+│   └── auth.css
+├── js/
+│   ├── app.js
+│   ├── courses.js
+│   ├── learning.js
+│   ├── dashboard.js
+│   ├── auth.js
+│   └── admin.js
+├── functions/
+│   └── api/
+│       └── [[path]].js
+└── README.md
 ```
 
-### Vérifications utiles pour ce projet
+**Organisation :** les pages HTML contiennent la structure et chargent des fichiers CSS et JS externes. Les traitements d'authentification sont exécutés côté Cloudflare, dans `functions/`. Ne jamais déplacer ces traitements ou secrets dans le JavaScript du navigateur.
 
-- Le site s’ouvre sans erreur JavaScript.
-- La création du profil et l’accès à l’espace étudiant fonctionnent.
-- Les consignes restent visibles dans l’atelier.
-- Le JavaScript s’exécute et l’aperçu HTML s’affiche.
-- Les brouillons et la progression sont conservés après actualisation.
-- Les boutons restent accessibles sur mobile et au clavier.
-- Une fonction non testée est signalée comme telle.
+## Démarrage et publication
 
-Ne jamais ajouter de mot de passe, de clé API ou de donnée personnelle dans le dépôt. Conserver la distinction entre les fonctions disponibles et celles encore prévues.
+### Partie statique
 
-### Historique des contributions documentées
+Ouvrir le projet via un **serveur HTTP local** pour parcourir les pages et utiliser l'atelier. Il est possible d'afficher les fichiers HTML statiquement, mais les routes `/api/*` exigent un environnement compatible Cloudflare Pages Functions.
 
-| Date | Contributeur GitHub | Ajouts et modifications | Référence |
-| --- | --- | --- | --- |
-| 2026-11-01 | @jokkair91-cmd (avec assistance de ChatGPT) | Consignes et indices dans l’atelier, progression locale déclarative, correction des brouillons vides, gestion du stockage indisponible, raccourci clavier et adaptations mobiles. Syntaxe et six vérifications simulées validées ; rendu dans un navigateur réel restant à vérifier. | [Proposition nº 2](https://github.com/Motherlode94/CodeDuo-Academy/pull/2) |
-| 2026-11-01 | @jokkair91-cmd (avec assistance de ChatGPT) | Ajout de ce guide de contribution et du modèle de description des changements dans le README. Modification documentaire uniquement. | Historique Git du README |
+### Environnement Cloudflare
 
-Pour les prochaines contributions, ajouter une ligne avec le pseudo réel de l’auteur, la date, un résumé et le lien vers la proposition ou le commit. Cet historique résume les contributions documentées ici ; l’historique Git conserve le détail des commits.
+Le projet Cloudflare Pages `codeduo-academy` est associé au dépôt GitHub et à sa branche `main`. La base D1 dédiée s'appelle `codeduo-academy-auth`, avec le binding nommé `DB`.
 
+Pour une installation sur un autre compte, créer une base D1 et lui appliquer une migration compatible avec les tables suivantes :
 
-## Authentification Cloudflare — déploiement 2026-11-01
+- `users` : identifiant, pseudonyme unique, rôle, sel, empreinte de mot de passe, date de création ;
+- `sessions` : empreinte du jeton de session, utilisateur et expiration ;
+- `login_attempts` : compteur et fenêtre temporelle de limitation des tentatives.
 
-Le site est lié au projet Cloudflare Pages `codeduo-academy` et à une base **D1 dédiée** `codeduo-academy-auth` (binding `DB` en production et aperçu). Les routes `/api/register`, `/api/login`, `/api/me`, `/api/logout`, `/api/password` et `/api/users` sont gérées par Pages Functions dans `functions/api/[[path]].js`.
+Configurer le binding `DB` pour les déploiements concernés, puis déployer les fichiers. **Ne pas copier une base de production ni des mots de passe dans le dépôt.** Tester les routes depuis le domaine réellement publié avant d'ouvrir les inscriptions au public.
 
-- Identifiants uniques (3–32 caractères), mots de passe de 12 caractères minimum et dérivation PBKDF2-SHA256 par sel individuel.
-- Sessions par cookie `HttpOnly; Secure; SameSite=Lax`, empreintes des jetons en base, révocation après changement de mot de passe.
-- Le rôle `student` est attribué aux nouvelles inscriptions publiques. Le rôle `admin` n'est attribué que dans D1 par un administrateur habilité ; aucune inscription publique administrateur.
-- Liste des utilisateurs disponible uniquement via un contrôle de rôle côté serveur. Tentatives de connexion limitées par identifiant/IP dans une fenêtre de 15 minutes.
-- Les pages HTML restent des ressources statiques : les données privées et les commandes administratives doivent toujours être protégées dans les API.
+### API d'authentification
 
-**Important :** les fonctions Cloudflare doivent être déployées et testées avant de considérer l'authentification comme opérationnelle. Aucun mot de passe initial ni secret ne doit apparaître dans GitHub.
+| Méthode | Route | Usage |
+| --- | --- | --- |
+| `POST` | `/api/register` | Créer un compte étudiant |
+| `POST` | `/api/login` | Se connecter |
+| `GET` | `/api/me` | Consulter la session |
+| `POST` | `/api/logout` | Fermer la session |
+| `POST` | `/api/password` | Changer son mot de passe et révoquer les sessions |
+| `GET` | `/api/users` | Liste des utilisateurs, réservée au rôle administrateur |
 
-**Courrier :** WarLike Mail est actuellement une messagerie interne, non un service SMTP/IMAP ou de livraison d'e-mails Internet. L'envoi d'e-mails de vérification/réinitialisation n'est donc pas activé ici ; il exige un service d'envoi et des domaines correctement configurés. WarLike Server dépend d'identités signées et de secrets privés, il n'a pas été modifié pour CodeDuo afin d'éviter une régression pour tes autres applications.
+Le backend utilise notamment PBKDF2-SHA256 avec sel individuel, des cookies `HttpOnly; Secure; SameSite=Lax`, des empreintes de jetons côté base et une limitation applicative des tentatives. Ces mécanismes ne remplacent pas un audit de sécurité et des tests d'intrusion. Les pages HTML sont publiques ; toute donnée privée ou action administrative doit être protégée **sur l'API**, pas seulement masquée dans l'interface.
+
+**Gestion des mots de passe :** ne jamais publier d'identifiants initiaux, mots de passe, clés ou jetons dans les commits, les exemples ou les issues. La réinitialisation par e-mail n'est pas implémentée.
+
+## Stockage et progression
+
+Les **cours validés**, brouillons de l'éditeur et certaines données d'exercices sont encore enregistrés par `localStorage`. Ils ne sont **pas encore associés au compte D1 connecté**. Plusieurs profils utilisant le même navigateur peuvent donc voir les mêmes brouillons ou résultats. Une future migration devra enregistrer le travail de chaque étudiant par son ID serveur et vérifier les autorisations à chaque lecture/écriture.
+
+## WarLike Server et WarLike Mail
+
+Les projets **WarLike Server** et **WarLike Mail** existent séparément sur Cloudflare. Leur code et leurs comptes ne sont pas automatiquement mutualisés avec CodeDuo. WarLike Mail est une **messagerie interne**, sans SMTP/IMAP Internet ; il ne fournit donc pas, à lui seul, l'envoi de courriers de validation et de réinitialisation pour les étudiants.
+
+Toute future intégration entre services nécessitera une API documentée, une identité de confiance entre serveurs, des autorisations explicites et des secrets gérés côté serveur.
+
+## Limitations et chantiers prioritaires
+
+1. Vérifier sur le domaine publié l'inscription, la connexion, la déconnexion, le changement de mot de passe et le refus de l'accès administrateur pour un étudiant.
+2. Renforcer l'exécution de code non fiable et les protections contre les abus avant une ouverture publique large.
+3. Rattacher brouillons, progression et remises aux identifiants utilisateurs en base D1.
+4. Ajouter une vraie correction des exercices, des tests et des parcours adaptés aux niveaux.
+5. Intégrer un service de messagerie transactionnelle et des procédures de récupération de compte.
+6. Étudier un environnement d'exécution C#/Python isolé avec quotas, plutôt que prétendre que le navigateur compile ces langages.
+
+## Contribuer au projet
+
+Les contributions pédagogiques, corrections et améliorations de l'accessibilité sont bienvenues.
+
+1. Partir de la dernière version de `main` et créer une branche descriptive (par exemple `ajout/quiz-css`).
+2. Effectuer les changements nécessaires dans les fichiers HTML/CSS/JS ou Functions concernés.
+3. Vérifier les fonctionnalités touchées et **indiquer explicitement ce qui n'a pas été testé**.
+4. Ouvrir une Pull Request décrivant le problème, la solution, les fichiers modifiés et les vérifications.
+5. Faire relire puis fusionner la contribution selon les permissions du dépôt.
+
+### Modèle de description d'une Pull Request
+
+```text
+Objectif :
+Changements apportés :
+Fichiers concernés :
+Tests effectués et résultats :
+Limites / vérifications restantes :
+```
+
+### Historique des contributions
+
+L'**historique officiel et exhaustif** est tenu par GitHub : **[commits de `main`](https://github.com/Motherlode94/CodeDuo-Academy/commits/main/)** et **[Pull Requests](https://github.com/Motherlode94/CodeDuo-Academy/pulls?q=is%3Apr)**.
+
+Contribution vérifiée : [**PR nº 2 — Améliorer les exercices guidés, les brouillons et l'accès clavier**](https://github.com/Motherlode94/CodeDuo-Academy/pull/2), proposée par [@jokkair91-cmd](https://github.com/jokkair91-cmd) avec assistance de ChatGPT et fusionnée dans `main`. Elle comprend notamment l'affichage des consignes et indices, la gestion des brouillons, le raccourci d'exécution et des adaptations pour mobile et clavier. Les tests mentionnés dans la PR étaient des simulations ; le rendu navigateur réel restait à vérifier lors de cette contribution.
+
+Les informations de cette section créditent un contributeur **sans lui attribuer la propriété du dépôt**. Les modifications plus récentes se consultent directement dans l'historique Git plutôt que dans une liste manuelle susceptible de devenir obsolète.
+
+## Licence
+
+Aucune licence d'utilisation ou de redistribution n'est précisée dans ce README. Consulter le dépôt pour déterminer si un fichier de licence a été ajouté avant de réutiliser le code hors du projet.
