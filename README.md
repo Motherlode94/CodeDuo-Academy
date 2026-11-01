@@ -147,3 +147,13 @@ Les informations de cette section créditent un contributeur **sans lui attribue
 ## Licence
 
 Aucune licence d'utilisation ou de redistribution n'est précisée dans ce README. Consulter le dépôt pour déterminer si un fichier de licence a été ajouté avant de réutiliser le code hors du projet.
+
+
+## Espace MAO (musique assistée par ordinateur)
+
+- `mao.html` : accueil et présentation du parcours musique.
+- `cours-mao.html` : 12 leçons, questions de compréhension et défis, progression locale.
+- `studio-mao.html` : séquenceur à 16 pas utilisant Web Audio API (kick, snare, hi-hat, basse), tempo de 60 à 180 BPM, lecture et sauvegarde locale des patterns.
+- `css/mao.css` : styles spécifiques ; `js/mao-courses.js`, `js/mao-learning.js`, `js/mao-studio.js` : cours et mécanique audio.
+
+Les comptes CodeDuo existants (étudiant et administrateur) restent les mêmes : **aucun nouvel identifiant ni mot de passe n'est généré pour la MAO**. L'accès à la connexion se fait via `connexion.html`. Les cours et le séquenceur sont pour l'instant accessibles publiquement ; la sauvegarde du pattern et de la progression utilise `localStorage` et non D1. Il ne s'agit pas d'un DAW professionnel, aucun export WAV, aucun VST ni enregistrement microphone. Les mots de passe ne doivent jamais être ajoutés au code public.
