@@ -39,3 +39,66 @@ Authentification réelle, base des élèves, suivi synchronisé, parcours comple
 - Barre d’outils adaptée aux petits écrans.
 
 Les brouillons et la progression sont communs aux profils locaux sur un même navigateur. Changer de profil ne les efface pas. Prism et les polices utilisent des services externes ; l’éditeur reste utilisable sans coloration si Prism ne se charge pas.
+
+## Contributions : ajouts et modifications
+
+Chaque contributeur décrit ses changements pour que les autres puissent comprendre ce qui a été ajouté, modifié ou corrigé.
+
+### Proposer un changement
+
+1. Partir de la dernière version de `main`.
+2. Créer une branche pour son travail, par exemple `ajout/exercice-html` ou `correction/sauvegarde`. Sans accès en écriture, créer une copie du dépôt avec **Fork**.
+3. Faire les changements et vérifier les fonctions concernées.
+4. Ouvrir une **Pull Request** vers `main` : c’est une proposition de modification à relire avant intégration.
+5. Remplir le modèle ci-dessous et indiquer les tests réellement effectués. Préciser ce qui reste à vérifier.
+6. Après relecture, un responsable du dépôt peut fusionner la proposition dans `main`.
+
+### Modèle à copier dans chaque proposition
+
+```text
+Contributeur : @pseudo-GitHub
+Date : AAAA-MM-JJ
+Type : ajout / modification / correction / documentation
+
+Objectif :
+Pourquoi ce changement est utile.
+
+Ajouts :
+- Nouvelles fonctions ou nouveaux contenus.
+
+Modifications et corrections :
+- Ce qui a changé et le comportement obtenu.
+
+Fichiers concernés :
+- Chemins des fichiers modifiés.
+
+Vérifications effectuées :
+- Test réalisé et résultat.
+- Navigateur et appareil si un test visuel a été effectué.
+
+Limites ou points restant à vérifier :
+- Indiquer les éléments non testés.
+
+Lien vers la proposition ou le commit :
+```
+
+### Vérifications utiles pour ce projet
+
+- Le site s’ouvre sans erreur JavaScript.
+- La création du profil et l’accès à l’espace étudiant fonctionnent.
+- Les consignes restent visibles dans l’atelier.
+- Le JavaScript s’exécute et l’aperçu HTML s’affiche.
+- Les brouillons et la progression sont conservés après actualisation.
+- Les boutons restent accessibles sur mobile et au clavier.
+- Une fonction non testée est signalée comme telle.
+
+Ne jamais ajouter de mot de passe, de clé API ou de donnée personnelle dans le dépôt. Conserver la distinction entre les fonctions disponibles et celles encore prévues.
+
+### Historique des contributions documentées
+
+| Date | Contributeur GitHub | Ajouts et modifications | Référence |
+| --- | --- | --- | --- |
+| 2026-11-01 | @jokkair91-cmd (avec assistance de ChatGPT) | Consignes et indices dans l’atelier, progression locale déclarative, correction des brouillons vides, gestion du stockage indisponible, raccourci clavier et adaptations mobiles. Syntaxe et six vérifications simulées validées ; rendu dans un navigateur réel restant à vérifier. | [Proposition nº 2](https://github.com/Motherlode94/CodeDuo-Academy/pull/2) |
+| 2026-11-01 | @jokkair91-cmd (avec assistance de ChatGPT) | Ajout de ce guide de contribution et du modèle de description des changements dans le README. Modification documentaire uniquement. | Historique Git du README |
+
+Pour les prochaines contributions, ajouter une ligne avec le pseudo réel de l’auteur, la date, un résumé et le lien vers la proposition ou le commit. Cet historique résume les contributions documentées ici ; l’historique Git conserve le détail des commits.
