@@ -9,7 +9,8 @@ const sessionCookie=(t,max)=>'cd_session='+t+'; Path=/; HttpOnly; Secure; SameSi
 const stripCookie='cd_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
 export async function onRequest({request,env}){
   if(!env.DB)return json({error:'Base de données indisponible'},503);
-  const db=env.DB;const path=new URL(request.url).pathname.replace(/^\/api\/?/,'');const method=request.method;
+  const db=env.DB;const origin=request.headers.get('origin');if(request.method!=='GET'&&origin&&origin!==new URL(request.url).origin)return json({error:'Origine non autorisée'},403);const path=new URL(request.url).pathname.replace(/^\/api\/?/,'');const method=request.method;
+  if(method==='GET'&&path==='users'){const actor=await current(request,db);if(!actor||actor.role!=='admin')return json({error:'Accès réservé'},403);const rows=await db.prepare('SELECT id, username, role, created_at FROM users ORDER BY created_at DESC LIMIT 100').all();return json({users:rows.results||[]});}
   if(method==='GET'&&path==='me'){const user=await current(request,db);return json({user:user||null});}
   if(method==='POST'&&path==='logout'){const t=cookie(request);if(/^[a-f0-9]{64}$/.test(t))await db.prepare('DELETE FROM sessions WHERE token_hash=?').bind(await digest(t)).run();return json({ok:true},200,{'set-cookie':stripCookie});}
   if(method!=='POST'||!['register','login'].includes(path))return json({error:'Route inexistante'},404);
