@@ -1,1 +1,86 @@
-(()=>{'use strict';const $=id=>document.getElementById(id);let register=false;const feedback=$('authFeedback');function mode(v){register=v;$('loginTab').classList.toggle('selected',!v);$('registerTab').classList.toggle('selected',v);$('formTitle').textContent=v?'Créer un compte étudiant':'Connexion';$('confirmLabel').hidden=!v;$('confirmPassword').required=v;$('password').autocomplete=v?'new-password':'current-password';$('password').minLength=v?12:1;$('password').placeholder=v?'Au moins 12 caractères':'Ton mot de passe';$('submitAuth').textContent=v?'Créer le compte':'Me connecter';feedback.textContent=''}$('loginTab').onclick=()=>mode(false);$('registerTab').onclick=()=>mode(true);$('credentialsForm').onsubmit=async e=>{e.preventDefault();feedback.textContent='Vérification…';const u=$('username').value.trim().toLowerCase(),p=$('password').value;if(register&&p!==$('confirmPassword').value){feedback.textContent='Les mots de passe ne correspondent pas.';return}$('submitAuth').disabled=true;try{const res=await fetch('/api/'+(register?'register':'login'),{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({username:u,password:p})});const contentType=res.headers.get('content-type')||'';if(!contentType.includes('application/json')){feedback.textContent='API de connexion inaccessible (HTTP '+res.status+'). Contacte l’administrateur.';return}const data=await res.json();if(!res.ok){feedback.textContent=(data.error||'Connexion impossible.')+' (HTTP '+res.status+')';return}location.href=data.user?.role==='admin'?'./admin.html':'./etudiant.html'}catch{feedback.textContent='Service indisponible. Vérifie le déploiement Cloudflare et la base D1.'}finally{$('submitAuth').disabled=false}};async function checkHealth(){const out=$('serverHealth');if(!out)return;out.textContent='Vérification de l’API…';try{const res=await fetch('/api/health',{cache:'no-store'});if(!(res.headers.get('content-type')||'').includes('application/json')){out.textContent='API inaccessible (HTTP '+res.status+').';return}const d=await res.json();out.textContent=res.ok&&d.ok?'Serveur et base de données accessibles.':'API en erreur (HTTP '+res.status+').'}catch{out.textContent='Serveur de connexion inaccessible.'}}if($('retryHealth'))$('retryHealth').onclick=checkHealth;checkHealth();if(new URLSearchParams(location.search).get('mode')==='register')mode(true);})();
+(() => {
+  'use strict';
+
+  const byId = (id) => document.getElementById(id);
+  const feedback = byId('authFeedback');
+  const submitButton = byId('submitAuth');
+  let registering = false;
+
+  function setMode(isRegistering) {
+    registering = isRegistering;
+    byId('loginTab').classList.toggle('selected', !registering);
+    byId('registerTab').classList.toggle('selected', registering);
+    byId('formTitle').textContent = registering ? 'Créer un compte étudiant' : 'Connexion';
+    byId('confirmLabel').hidden = !registering;
+    byId('confirmPassword').required = registering;
+    byId('password').minLength = registering ? 12 : 1;
+    byId('password').autocomplete = registering ? 'new-password' : 'current-password';
+    byId('password').placeholder = registering ? 'Au moins 12 caractères' : 'Ton mot de passe';
+    submitButton.textContent = registering ? 'Créer le compte' : 'Me connecter';
+    feedback.textContent = '';
+  }
+
+  async function submitCredentials(event) {
+    event.preventDefault();
+    const username = byId('username').value.trim().toLowerCase();
+    const password = byId('password').value;
+
+    if (registering && password !== byId('confirmPassword').value) {
+      feedback.textContent = 'Les mots de passe ne correspondent pas.';
+      return;
+    }
+
+    submitButton.disabled = true;
+    feedback.textContent = 'Vérification…';
+
+    try {
+      const endpoint = registering ? '/api/register' : '/api/login';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        credentials: 'same-origin',
+        body: JSON.stringify({username, password})
+      });
+      if (!(response.headers.get('content-type') || '').includes('application/json')) {
+        feedback.textContent = 'API indisponible (HTTP ' + response.status + ').';
+        return;
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        feedback.textContent = (data.error || 'Connexion refusée.') + ' (HTTP ' + response.status + ')';
+        return;
+      }
+      window.location.assign(data.user?.role === 'admin' ? './admin.html' : './etudiant.html');
+    } catch (error) {
+      feedback.textContent = 'Service de connexion indisponible.';
+    } finally {
+      submitButton.disabled = false;
+    }
+  }
+
+  async function checkHealth() {
+    const status = byId('serverHealth');
+    if (!status) return;
+    status.textContent = 'Vérification de l’API…';
+    try {
+      const response = await fetch('/api/health', {cache: 'no-store'});
+      if (!(response.headers.get('content-type') || '').includes('application/json')) {
+        status.textContent = 'API inaccessible (HTTP ' + response.status + ').';
+        return;
+      }
+      const data = await response.json();
+      status.textContent = response.ok && data.ok
+        ? 'Serveur et base de données accessibles.'
+        : 'API en erreur (HTTP ' + response.status + ').';
+    } catch (error) {
+      status.textContent = 'Serveur de connexion inaccessible.';
+    }
+  }
+
+  byId('loginTab').addEventListener('click', () => setMode(false));
+  byId('registerTab').addEventListener('click', () => setMode(true));
+  byId('credentialsForm').addEventListener('submit', submitCredentials);
+  byId('retryHealth')?.addEventListener('click', checkHealth);
+  if (new URLSearchParams(location.search).get('mode') === 'register') setMode(true);
+  checkHealth();
+})();
