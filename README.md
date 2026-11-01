@@ -20,8 +20,8 @@ Ouvrir `index.html` via un serveur web statique ou publier sur GitHub Pages. Les
 
 ```
 index.html
-style.css
-app.js
+css/style.css
+js/app.js
 README.md
 ```
 
@@ -30,3 +30,12 @@ GitHub Pages peut servir ce site en statique depuis la racine du dépôt, une fo
 
 ## Prochaines étapes
 Authentification réelle, base des élèves, suivi synchronisé, parcours complet, compilation en sandbox de confiance.
+
+## Améliorations du parcours
+- Consigne et indice visibles dans l’atelier pour chacun des trois exercices.
+- Progression déclarative : l’apprenant marque lui-même un exercice terminé ; aucune correction automatique.
+- Brouillons par langage, y compris un brouillon vide, et message si le stockage est indisponible.
+- Raccourci Ctrl/Commande + Entrée, focus clavier visible et navigation au clavier dans la fenêtre de profil.
+- Barre d’outils adaptée aux petits écrans.
+
+Les brouillons et la progression sont communs aux profils locaux sur un même navigateur. Changer de profil ne les efface pas. Prism et les polices utilisent des services externes ; l’éditeur reste utilisable sans coloration si Prism ne se charge pas.
