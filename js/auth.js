@@ -77,6 +77,15 @@
     }
   }
 
+  const toggle = byId('togglePassword');
+  if (toggle) toggle.addEventListener('click', () => {
+    const field = byId('password');
+    const visible = field.type === 'password';
+    field.type = visible ? 'text' : 'password';
+    toggle.textContent = visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe';
+    toggle.setAttribute('aria-pressed', String(visible));
+  });
+
   byId('loginTab').addEventListener('click', () => setMode(false));
   byId('registerTab').addEventListener('click', () => setMode(true));
   byId('credentialsForm').addEventListener('submit', submitCredentials);
