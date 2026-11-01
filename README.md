@@ -102,3 +102,18 @@ Ne jamais ajouter de mot de passe, de clé API ou de donnée personnelle dans le
 | 2026-11-01 | @jokkair91-cmd (avec assistance de ChatGPT) | Ajout de ce guide de contribution et du modèle de description des changements dans le README. Modification documentaire uniquement. | Historique Git du README |
 
 Pour les prochaines contributions, ajouter une ligne avec le pseudo réel de l’auteur, la date, un résumé et le lien vers la proposition ou le commit. Cet historique résume les contributions documentées ici ; l’historique Git conserve le détail des commits.
+
+
+## Authentification Cloudflare — déploiement 2026-11-01
+
+Le site est lié au projet Cloudflare Pages `codeduo-academy` et à une base **D1 dédiée** `codeduo-academy-auth` (binding `DB` en production et aperçu). Les routes `/api/register`, `/api/login`, `/api/me`, `/api/logout`, `/api/password` et `/api/users` sont gérées par Pages Functions dans `functions/api/[[path]].js`.
+
+- Identifiants uniques (3–32 caractères), mots de passe de 12 caractères minimum et dérivation PBKDF2-SHA256 par sel individuel.
+- Sessions par cookie `HttpOnly; Secure; SameSite=Lax`, empreintes des jetons en base, révocation après changement de mot de passe.
+- Le rôle `student` est attribué aux nouvelles inscriptions publiques. Le rôle `admin` n'est attribué que dans D1 par un administrateur habilité ; aucune inscription publique administrateur.
+- Liste des utilisateurs disponible uniquement via un contrôle de rôle côté serveur. Tentatives de connexion limitées par identifiant/IP dans une fenêtre de 15 minutes.
+- Les pages HTML restent des ressources statiques : les données privées et les commandes administratives doivent toujours être protégées dans les API.
+
+**Important :** les fonctions Cloudflare doivent être déployées et testées avant de considérer l'authentification comme opérationnelle. Aucun mot de passe initial ni secret ne doit apparaître dans GitHub.
+
+**Courrier :** WarLike Mail est actuellement une messagerie interne, non un service SMTP/IMAP ou de livraison d'e-mails Internet. L'envoi d'e-mails de vérification/réinitialisation n'est donc pas activé ici ; il exige un service d'envoi et des domaines correctement configurés. WarLike Server dépend d'identités signées et de secrets privés, il n'a pas été modifié pour CodeDuo afin d'éviter une régression pour tes autres applications.
