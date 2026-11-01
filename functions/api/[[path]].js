@@ -18,7 +18,7 @@ export async function onRequest({request,env}){
   if(method!=='POST'||!['register','login'].includes(path))return json({error:'Route inexistante'},404);
   let body;try{body=await request.json()}catch{return json({error:'JSON invalide'},400)}
   const username=String(body?.username||'').trim().toLowerCase(),password=String(body?.password||'');
-  if(!/^[a-z0-9_-]{3,32}$/.test(username)||password.length<12||password.length>200)return json({error:'Identifiant ou mot de passe invalide (12 caractères minimum).'},400);
+  if(!/^[a-z0-9_-]{3,32}$/.test(username)||password.length<(path==='register'?12:1)||password.length>200)return json({error:path==='register'?'Inscription : mot de passe de 12 caractères minimum.':'Identifiant ou mot de passe invalide.'},400);
   // Each login attempt performs a PBKDF2 derivation; reject large bursts via Cloudflare WAF rate limiting in production.
   const ip=request.headers.get('cf-connecting-ip')||'unknown';const attemptKey=await digest(ip+':'+username+':'+path);const now=Date.now();const prev=await db.prepare('SELECT attempts,window_start FROM login_attempts WHERE attempt_key=?').bind(attemptKey).first();if(prev&&now-prev.window_start<900000&&prev.attempts>=10)return json({error:'Trop de tentatives. Réessaie dans 15 minutes.'},429,{'retry-after':'900'});await db.prepare('INSERT INTO login_attempts(attempt_key,attempts,window_start) VALUES (?,?,?) ON CONFLICT(attempt_key) DO UPDATE SET attempts=CASE WHEN ?-window_start>900000 THEN 1 ELSE attempts+1 END, window_start=CASE WHEN ?-window_start>900000 THEN ? ELSE window_start END').bind(attemptKey,1,now,now,now,now).run();
   if(path==='register'){
