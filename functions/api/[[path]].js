@@ -7,7 +7,15 @@ function cookie(request){return (request.headers.get('cookie')||'').split(';').m
 async function current(request,db){const token=cookie(request);if(!/^[a-f0-9]{64}$/.test(token))return null;return db.prepare('SELECT users.id, users.username, users.role FROM sessions JOIN users ON users.id=sessions.user_id WHERE sessions.token_hash=? AND sessions.expires_at>?').bind(await digest(token),Date.now()).first()}
 const sessionCookie=(t,max)=>'cd_session='+t+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age='+max;
 const stripCookie='cd_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
-export async function onRequest({request,env}){
+export async function onRequest(context) {
+  try {
+    return await handleRequest(context);
+  } catch (error) {
+    console.error('CodeDuo API failure:', error instanceof Error ? error.stack : String(error));
+    return json({error:'Erreur serveur lors de la connexion. Consulte les journaux Cloudflare.'},500);
+  }
+}
+async function handleRequest({request,env}) {
   if(!env.DB)return json({error:'Base de données indisponible'},503);
   const db=env.DB;const origin=request.headers.get('origin');if(request.method!=='GET'&&origin&&origin!==new URL(request.url).origin)return json({error:'Origine non autorisée'},403);const path=new URL(request.url).pathname.replace(/^\/api\/?/,'');const method=request.method;
   if(method==='GET'&&path==='health'){const probe=await db.prepare('SELECT 1 AS ok').first();return json({ok:probe?.ok===1,service:'codeduo-auth'});}
