@@ -1,0 +1,39 @@
+name: CodeDuo two-browser production collaboration test
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'CodeDuo origin to test (use staging URL when available)'
+        required: true
+        default: 'https://codeduo-academy.pages.dev'
+        type: string
+jobs:
+  two-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CODEDUO_E2E_URL: ${{ inputs.target_url }}
+      CODEDUO_E2E_USER_A: ${{ secrets.CODEDUO_E2E_USER_A }}
+      CODEDUO_E2E_PASSWORD_A: ${{ secrets.CODEDUO_E2E_PASSWORD_A }}
+      CODEDUO_E2E_USER_B: ${{ secrets.CODEDUO_E2E_USER_B }}
+      CODEDUO_E2E_PASSWORD_B: ${{ secrets.CODEDUO_E2E_PASSWORD_B }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check pre-authorized test account configuration
+        run: |
+          test -n "$CODEDUO_E2E_USER_A" &&
+          test -n "$CODEDUO_E2E_PASSWORD_A" &&
+          test -n "$CODEDUO_E2E_USER_B" &&
+          test -n "$CODEDUO_E2E_PASSWORD_B" || {
+            echo 'Configure four GitHub Actions secrets for two distinct pre-authorized test students.'
+            exit 1
+          }
+      - name: Install browser runner
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify two real authenticated browser sessions
+        run: node tests/pair-two-browsers.e2e.mjs

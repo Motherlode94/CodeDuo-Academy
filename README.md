@@ -201,3 +201,13 @@ Un Worker dédié `services/pair-realtime/`, utilisant **Cloudflare Durable Obje
 5. Tester en conditions mobiles et sur navigateur Edge. **Ne pas ouvrir le salon en production avant ces vérifications.**
 
 Le mode de collaboration ne permet actuellement ni fusion automatique des éditions concurrentes, ni historique restaurable par version ni chat vocal ou vidéo.
+
+## Test de deux étudiants connectés dans de vrais navigateurs
+
+Le test Playwright `tests/pair-two-browsers.e2e.mjs` utilise **deux contextes Chromium indépendants**, chacun avec son propre cookie de session, et vérifie en conditions réelles : connexion des deux étudiants, création d'un salon, invitation, échange HTML A→B, échange CSS B→A, reconnexion du second étudiant et rejet des visiteurs non authentifiés. Il ne crée aucun compte et ne supprime aucune donnée.
+
+**Préparation** : créer **deux comptes de test dédiés et autorisés**, différents des comptes pédagogiques existants, puis ajouter quatre secrets GitHub Actions au dépôt : `CODEDUO_E2E_USER_A`, `CODEDUO_E2E_PASSWORD_A`, `CODEDUO_E2E_USER_B` et `CODEDUO_E2E_PASSWORD_B`. Ne jamais placer leurs mots de passe dans Git, les logs ou un ticket public.
+
+**Exécution** : GitHub → Actions → « CodeDuo two-browser production collaboration test » → Run workflow, en indiquant l'URL souhaitée (préproduction recommandée). Le workflow est **manuel** afin d'éviter d'écrire des projets de test en production à chaque push. Les comptes de test peuvent conserver le salon et les fichiers de cet essai ; utiliser une base et des comptes de test réservés au QA si l'on souhaite une remise à zéro.
+
+**Interprétation** : les tests Node du Durable Object et les vérifications 401 ne suffisent pas à déclarer la collaboration validée. Seul un **run Playwright réussi sur la cible choisie** valide l'interaction à deux navigateurs. Ne pas marquer cette validation comme réussie tant que les quatre secrets ne sont pas configurés et que le run n'a pas réussi.

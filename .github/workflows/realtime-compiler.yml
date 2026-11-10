@@ -22,4 +22,5 @@ jobs:
           node-version: '22'
       - run: node --input-type=module --check < services/pair-realtime/src/index.js
       - run: node --check js/pair-client.js
+      - run: node --check tests/pair-two-browsers.e2e.mjs
       - run: node --test tests/pair-csharp.test.mjs tests/pair-durable-object.test.mjs
