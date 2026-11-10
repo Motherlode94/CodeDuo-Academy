@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 24000);
 builder.WebHost.UseUrls("http://0.0.0.0:8080");
 var app = builder.Build();
 var token = Environment.GetEnvironmentVariable("CODEDUO_COMPILER_TOKEN");
