@@ -7,7 +7,7 @@ async function verifyTicket(ticket,secret){
  try{
   const payload=dec64(parts[0]),signature=dec64(parts[1]);
   if(signature.length!==32)return null;
-  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'HMAC',{hash:'SHA-256'},false,['verify']);
+  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['verify']);
   if(!await crypto.subtle.verify('HMAC',key,signature,payload))return null;
   const data=JSON.parse(new TextDecoder().decode(payload));
   if(typeof data.room!=='string'||!/^[a-f0-9-]{36}$/.test(data.room)||typeof data.user!=='string'||data.user.length>100
