@@ -12,7 +12,7 @@
   if(!r.ok)throw Error('HTTP '+r.status);
   return r.json();
  }
- function init(){return ready||=call('me').then(data=>{actor=data.user||null;return actor}).catch(()=>{actor=null;return null})}
+ function init(){return ready||=call('me').then(data=>{actor=data.user||null;return actor}).catch(error=>{ready=null;throw error})}
  function normalize(ids,max){return [...new Set((Array.isArray(ids)?ids:[]).filter(n=>Number.isInteger(n)&&n>=1&&n<=max))]}
  async function completed(track){
   await init();const limit=track==='mao'?12:14;
