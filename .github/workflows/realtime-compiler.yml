@@ -1,0 +1,24 @@
+name: CodeDuo native compiler and realtime worker checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  dotnet-compiler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build services/csharp-compiler/CodeDuo.Compiler.csproj --configuration Release
+  realtime-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --input-type=module --check < services/pair-realtime/src/index.js
+      - run: node --check js/pair-client.js
+      - run: node --test tests/pair-csharp.test.mjs
