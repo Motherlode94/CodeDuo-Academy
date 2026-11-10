@@ -61,8 +61,8 @@ try{
  // Initial room snapshot may require an explicit acceptance; this is intentional
  // so one student's existing code cannot be silently overwritten.
  if(await b.locator('#pairTakeRemote').isVisible()){
+  b.once('dialog',dialog=>dialog.accept());
   await b.locator('#pairTakeRemote').click();
-  await b.on('dialog',dialog=>dialog.accept());
  }
  await updateFile(a,'html','<h1>'+marker+' from A</h1>');
  await b.waitForFunction(({marker})=>
