@@ -44,7 +44,7 @@ test('Worker rejects forged tickets before opening any room',async()=>{
  const bad=await worker.fetch(new Request('https://pair.example/connect',{headers:{upgrade:'websocket','x-codeduo-ticket':'invalid'}}),{PAIR_SECRET:secret,PAIR_ROOMS:{}});
  assert.equal(bad.status,401);
  const msg={room:'f734831b-b7c7-49d5-bbbd-dd5067fcb362',user:'alice',exp:Date.now()+15000,nonce:'test'};
- const payload=new TextEncoder().encode(JSON.stringify(msg)),key=await webcrypto.subtle.importKey('raw',new TextEncoder().encode(secret),'HMAC',{hash:'SHA-256'},false,['sign']);
+ const payload=new TextEncoder().encode(JSON.stringify(msg)),key=await webcrypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);
  const mac=new Uint8Array(await webcrypto.subtle.sign('HMAC',key,payload));
  const base=b=>Buffer.from(b).toString('base64url');
  let target=null;
