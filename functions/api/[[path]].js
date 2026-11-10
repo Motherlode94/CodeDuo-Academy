@@ -20,6 +20,71 @@ async function handleRequest({request,env}) {
   if(!env.DB)return json({error:'Base de données indisponible'},503);
   const db=env.DB;const origin=request.headers.get('origin');if(request.method!=='GET'&&origin&&origin!==new URL(request.url).origin)return json({error:'Origine non autorisée'},403);const path=new URL(request.url).pathname.replace(/^\/api\/?/,'');const method=request.method;
   if(method==='GET'&&path==='health'){const probe=await db.prepare('SELECT 1 AS ok').first();return json({ok:probe?.ok===1,service:'codeduo-auth'});}
+  if(path.startsWith('pair/')){
+    const actor=await current(request,db);
+    if(!actor)return json({error:'Connexion étudiante requise'},401);
+    const route=path.slice(5),now=Date.now();
+    if(method==='GET'&&route==='room'){
+      const rows=await db.prepare('SELECT pair_rooms.id, pair_rooms.expires_at FROM pair_members JOIN pair_rooms ON pair_rooms.id=pair_members.room_id WHERE pair_members.user_id=? AND pair_rooms.expires_at>? ORDER BY pair_members.joined_at DESC LIMIT 10').bind(actor.id,now).all();
+      return json({rooms:rows.results||[]});
+    }
+    if(method==='POST'&&route==='create'){
+      const count=await db.prepare('SELECT COUNT(*) AS total FROM pair_rooms WHERE owner_id=? AND expires_at>?').bind(actor.id,now).first();
+      if((count?.total||0)>=5)return json({error:'Maximum cinq salons actifs'},429);
+      const room=crypto.randomUUID(),invite=hex(crypto.getRandomValues(new Uint8Array(16))),expiry=now+7*86400000;
+      await db.prepare('INSERT INTO pair_rooms(id,owner_id,invite_hash,expires_at,created_at) VALUES(?,?,?,?,?)')
+        .bind(room,actor.id,await digest(invite),expiry,now).run();
+      await db.prepare('INSERT INTO pair_members(room_id,user_id,joined_at) VALUES(?,?,?)').bind(room,actor.id,now).run();
+      return json({room,invite,expiresAt:expiry},201);
+    }
+    if(method==='POST'&&route==='join'){
+      let body;try{const raw=await request.text();if(raw.length>1000)return json({error:'Invitation invalide'},400);body=JSON.parse(raw)}catch{return json({error:'Invitation invalide'},400)}
+      const code=body?.invite;if(typeof code!=='string'||!/^[a-f0-9]{32}$/.test(code))return json({error:'Code incorrect'},400);
+      const room=await db.prepare('SELECT id FROM pair_rooms WHERE invite_hash=? AND expires_at>?').bind(await digest(code),now).first();
+      if(!room)return json({error:'Invitation expirée ou inconnue'},404);
+      await db.prepare('INSERT OR IGNORE INTO pair_members(room_id,user_id,joined_at) SELECT ?,?,? WHERE (SELECT COUNT(*) FROM pair_members WHERE room_id=?)<2')
+        .bind(room.id,actor.id,now,room.id).run();
+      const member=await db.prepare('SELECT user_id FROM pair_members WHERE room_id=? AND user_id=?').bind(room.id,actor.id).first();
+      if(!member)return json({error:'Salon complet : deux étudiants maximum'},409);
+      return json({room:room.id,joined:true});
+    }
+    if(method==='GET'&&route==='socket'){
+      const room=new URL(request.url).searchParams.get('room');
+      if(!room||!/^[a-f0-9-]{36}$/.test(room))return json({error:'Salon invalide'},400);
+      const member=await db.prepare('SELECT pair_rooms.id FROM pair_members JOIN pair_rooms ON pair_rooms.id=pair_members.room_id WHERE pair_rooms.id=? AND pair_members.user_id=? AND pair_rooms.expires_at>?')
+        .bind(room,actor.id,now).first();
+      if(!member)return json({error:'Salon interdit ou expiré'},403);
+      if(request.headers.get('upgrade')?.toLowerCase()!=='websocket')return json({error:'WebSocket requis'},426);
+      if(!env.PAIR_REALTIME||!env.PAIR_SECRET)return json({error:'Collaboration non configurée'},503);
+      const expiry=now+30000,payload=JSON.stringify({room,user:actor.id,exp:expiry,nonce:crypto.randomUUID()});
+      const bytes=enc.encode(payload),key=await crypto.subtle.importKey('raw',enc.encode(env.PAIR_SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+      const mac=new Uint8Array(await crypto.subtle.sign('HMAC',key,bytes));
+      const b64=arr=>btoa(String.fromCharCode(...arr)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+      return env.PAIR_REALTIME.fetch('https://internal/connect',{headers:{upgrade:'websocket','x-codeduo-ticket':b64(bytes)+'.'+b64(mac)}});
+    }
+    return json({error:'Route binôme inconnue'},404);
+  }
+  if(path==='csharp/compile'){
+    if(method!=='POST')return json({error:'Méthode non autorisée'},405);
+    const actor=await current(request,db);
+    if(!actor)return json({error:'Connecte-toi pour compiler en C#'},401);
+    if(!env.CSHARP_COMPILER_URL||!env.CSHARP_COMPILER_TOKEN)return json({error:'Service .NET non configuré : compilation indisponible'},503);
+    let code;try{const body=await request.text();if(body.length>18000)return json({error:'Source trop volumineuse'},413);
+      const data=JSON.parse(body);code=data?.code;
+    }catch{return json({error:'Corps JSON invalide'},400)}
+    if(typeof code!=='string'||code.length>16000)return json({error:'Code C# invalide'},400);
+    let response;try{
+      const timeout=AbortSignal.timeout(16000);
+      response=await fetch(env.CSHARP_COMPILER_URL,{method:'POST',
+        headers:{'content-type':'application/json','authorization':'Bearer '+env.CSHARP_COMPILER_TOKEN},
+        body:JSON.stringify({code}),signal:timeout});
+    }catch{return json({error:'Compilateur .NET temporairement indisponible'},503)}
+    if(!response.ok)return json({error:response.status===429?'Compilateur occupé':'Compilateur indisponible'},response.status===429?429:503);
+    let result;try{result=await response.json()}catch{return json({error:'Réponse du compilateur invalide'},502)}
+    if(typeof result?.ok!=='boolean'||!Array.isArray(result.diagnostics))return json({error:'Réponse du compilateur invalide'},502);
+    return json({ok:result.ok,diagnostics:result.diagnostics.filter(x=>typeof x==='string').slice(0,30).map(x=>x.slice(0,450)),
+      compiler:'Roslyn via .NET SDK 8',executed:false});
+  }
   if(path==='project'){
     const actor=await current(request,db);
     if(!actor)return json({error:'Connexion requise'},401);

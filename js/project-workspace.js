@@ -29,7 +29,9 @@ async function save(){
   dirty=false;status.textContent=user?'✓ Projet sauvegardé sur ton compte':'✓ Projet sauvegardé localement';
  }catch{status.textContent='Sauvegarde impossible : exporte les fichiers pour éviter toute perte.'}
 }
-function schedule(){dirty=true;status.textContent='Modifications en attente…';clearTimeout(timer);timer=setTimeout(save,1000)}
+function schedule(){dirty=true;status.textContent='Modifications en attente…';clearTimeout(timer);timer=setTimeout(save,1000);
+ window.dispatchEvent(new CustomEvent('codeduo-local-edit',{detail:{files:currentFiles()}}))
+}
 function exportFiles(){
  currentFiles();for(const [key,name] of [['html','index.html'],['css','style.css'],['javascript','main.js']]){
   const url=URL.createObjectURL(new Blob([files[key]],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');
@@ -90,5 +92,14 @@ $('loadExample').onclick=()=>{if(!confirm('Remplacer les trois fichiers par cet 
 $('exercise').onchange=()=>{tests.replaceChildren();output.textContent='Choisis un modèle ou adapte ton projet à cet exercice.'};
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();run()}if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();save()}});
 window.addEventListener('pagehide',()=>{if(dirty&&!CodeDuoSync.isAuthenticated()){try{localStorage.setItem('codeduo-web-project',JSON.stringify(currentFiles()))}catch{}}});
+window.CodeDuoPairBridge={
+ getFiles:()=>currentFiles(),
+ applyFiles(next){if(!valid(next))throw Error('Fichiers binôme invalides');
+  files={html:next.html,css:next.css,javascript:next.javascript};editor.value=files[selected];dirty=true;
+  status.textContent='Modifications du binôme reçues. Sauvegarde en cours…';
+  clearTimeout(timer);timer=setTimeout(save,800);
+ },
+ isDirty:()=>dirty
+};
 load();
 })();

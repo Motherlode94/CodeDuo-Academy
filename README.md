@@ -180,3 +180,24 @@ La page `atelier-projet.html` contient un véritable éditeur à trois fichiers 
 Le projet est sauvegardé dans la table D1 `student_projects` pour les comptes connectés et uniquement dans le navigateur pour les invités. L'API `GET/PUT /api/project` applique une limite de **16 000 caractères par fichier**, un budget maximal de corps de requête et l'identifiant issu de la session, jamais de la requête du client. Le module `js/project-checks.js` vérifie effectivement des éléments du DOM et la réaction des boutons. Il s'agit d'évaluations formatives, pas de certifications.
 
 **Avant le déploiement** : appliquer `migrations/0003_student_projects.sql` sur une base D1 de test, vérifier le fonctionnement dans un déploiement Pages de prévisualisation, puis déployer la migration en production avant de fusionner la branche. Pas de compilation C#/Python, de projets synchronisés en temps réel ou de tests résistants au code malveillant pour cette version.
+
+## C# natif et collaboration binôme (PR de développement)
+
+### Compilation C# réelle — Roslyn /.NET 8
+Le bouton **Exécuter** de l'atelier existant fait désormais appel à `POST /api/csharp/compile` pour les comptes connectés. Cette route peut appeler un **service .NET SDK 8 externe**, dont le code et le Dockerfile sont dans `services/csharp-compiler/`. Le service lance la **compilation réelle** d'un fichier `Program.cs` et renvoie les diagnostics du compilateur (jusqu'à 30 messages). **Il n'exécute jamais l'assembly compilé**. Il contrôle la taille du code et applique un délai de compilation ainsi qu'une limite de requêtes concurrentes.
+
+**Conditions de fonctionnement** : déployer le service dans un environnement conteneurisé spécifiquement isolé, restreindre l'accès réseau au service, configurer le secret `CODEDUO_COMPILER_TOKEN` (32+ caractères), puis sur **Cloudflare Pages** configurer `CSHARP_COMPILER_URL` (URL HTTPS exacte vers `/compile`) et `CSHARP_COMPILER_TOKEN` (même secret). Ne pas mettre de secret dans GitHub, le front-end, ni les variables publiques. Sur un projet exposé à des étudiants inconnus, utiliser une politique d'isolation renforcée, un contrôle d'egress, des quotas CPU/mémoire, une limite de processus et des logs d'abus avant d'activer le service. Le conteneur d'exemple n'est **pas** un sandbox multi-tenant certifié. En absence de service, l'API répond clairement **503** : ne pas prétendre qu'une analyse C# locale est une compilation.
+
+### Travail en binôme en temps réel
+Les migrations `migrations/0004_pair_rooms.sql` ajoutent des salons à **deux comptes** et des codes d'invitation aléatoires dont **seul le hachage SHA-256 est conservé** dans D1. L'invitation expire après sept jours. L'atelier `atelier-projet.html` offre créer / rejoindre / quitter un salon et voir la présence du partenaire. La route Pages authentifiée `GET /api/pair/socket?room=...` vérifie la session et l'appartenance, puis transmet une autorisation HMAC de courte durée au Worker privé de collaboration.
+
+Un Worker dédié `services/pair-realtime/`, utilisant **Cloudflare Durable Objects et les WebSockets hibernables**, sauvegarde les versions du projet de salon et diffuse les changements. Chaque modification est associée à un numéro de révision ; un changement concurrent renvoie **conflict**, ce qui laisse à l'étudiant la possibilité de conserver ses fichiers locaux ou de charger explicitement la version distante. Il ne s'agit pas encore d'un éditeur CRDT ou OT qui fusionne les caractères simultanément.
+
+**Conditions de mise en service** :
+1. Tester les migrations `0002`, `0003` et `0004` dans une base D1 indépendante. Les déployer dans l'ordre en production **avant la fusion** des endpoints.
+2. Déployer le Worker avec `services/pair-realtime/wrangler.jsonc`, par exemple avec Wrangler depuis ce sous-dossier, après revue de sécurité. Configurer son secret serveur `PAIR_SECRET` (valeur secrète de 32 caractères minimum).
+3. Ajouter une **Service binding Cloudflare Pages** nommée `PAIR_REALTIME`, pointant vers ce Worker, et configurer exactement le même `PAIR_SECRET` dans l'environnement Pages (server-side only).
+4. Redéployer Pages, créer deux **comptes de test distincts**, vérifier création / invitation / WebSockets / édition bidirectionnelle / gestion de conflits / reconnexion, puis vérifier qu'un troisième compte est refusé.
+5. Tester en conditions mobiles et sur navigateur Edge. **Ne pas ouvrir le salon en production avant ces vérifications.**
+
+Le mode de collaboration ne permet actuellement ni fusion automatique des éditions concurrentes, ni historique restaurable par version ni chat vocal ou vidéo.

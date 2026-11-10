@@ -1,0 +1,9 @@
+{
+  "name": "codeduo-pair-realtime",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "durable_objects": {
+    "bindings": [{"name":"PAIR_ROOMS","class_name":"PairRoom"}]
+  },
+  "migrations": [{"tag":"v1","new_sqlite_classes":["PairRoom"]}]
+}
