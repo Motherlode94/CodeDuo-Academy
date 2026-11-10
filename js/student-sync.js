@@ -16,7 +16,7 @@
  function normalize(ids,max){return [...new Set((Array.isArray(ids)?ids:[]).filter(n=>Number.isInteger(n)&&n>=1&&n<=max))]}
  async function completed(track){
   await init();const limit=track==='mao'?12:14;
-  if(!actor)return normalize(JSON.parse(storage.get(track==='mao'?'codeduo-mao-progress':'codeduo-learning-completed')||'[]'),limit);
+  if(!actor){let ids=[];try{ids=JSON.parse(storage.get(track==='mao'?'codeduo-mao-progress':'codeduo-learning-completed')||'[]')}catch{}return normalize(ids,limit)}
   const data=await call('progress');return normalize((data.completed||[]).filter(x=>x.track===track).map(x=>x.lesson_id),limit);
  }
  async function complete(track,lessonId){
