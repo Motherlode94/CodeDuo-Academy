@@ -20,6 +20,27 @@ async function handleRequest({request,env}) {
   if(!env.DB)return json({error:'Base de données indisponible'},503);
   const db=env.DB;const origin=request.headers.get('origin');if(request.method!=='GET'&&origin&&origin!==new URL(request.url).origin)return json({error:'Origine non autorisée'},403);const path=new URL(request.url).pathname.replace(/^\/api\/?/,'');const method=request.method;
   if(method==='GET'&&path==='health'){const probe=await db.prepare('SELECT 1 AS ok').first();return json({ok:probe?.ok===1,service:'codeduo-auth'});}
+  if(path==='csharp/compile'){
+    if(method!=='POST')return json({error:'Méthode non autorisée'},405);
+    const actor=await current(request,db);
+    if(!actor)return json({error:'Connecte-toi pour compiler en C#'},401);
+    if(!env.CSHARP_COMPILER_URL||!env.CSHARP_COMPILER_TOKEN)return json({error:'Service .NET non configuré : compilation indisponible'},503);
+    let code;try{const body=await request.text();if(body.length>18000)return json({error:'Source trop volumineuse'},413);
+      const data=JSON.parse(body);code=data?.code;
+    }catch{return json({error:'Corps JSON invalide'},400)}
+    if(typeof code!=='string'||code.length>16000)return json({error:'Code C# invalide'},400);
+    let response;try{
+      const timeout=AbortSignal.timeout(16000);
+      response=await fetch(env.CSHARP_COMPILER_URL,{method:'POST',
+        headers:{'content-type':'application/json','authorization':'Bearer '+env.CSHARP_COMPILER_TOKEN},
+        body:JSON.stringify({code}),signal:timeout});
+    }catch{return json({error:'Compilateur .NET temporairement indisponible'},503)}
+    if(!response.ok)return json({error:response.status===429?'Compilateur occupé':'Compilateur indisponible'},response.status===429?429:503);
+    let result;try{result=await response.json()}catch{return json({error:'Réponse du compilateur invalide'},502)}
+    if(typeof result?.ok!=='boolean'||!Array.isArray(result.diagnostics))return json({error:'Réponse du compilateur invalide'},502);
+    return json({ok:result.ok,diagnostics:result.diagnostics.filter(x=>typeof x==='string').slice(0,30).map(x=>x.slice(0,450)),
+      compiler:'Roslyn via .NET SDK 8',executed:false});
+  }
   if(path==='project'){
     const actor=await current(request,db);
     if(!actor)return json({error:'Connexion requise'},401);
