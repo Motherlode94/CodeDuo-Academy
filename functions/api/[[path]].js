@@ -16,7 +16,7 @@ export async function onRequest(context) {
   }
 }
 async function handleRequest({request,env}) {
-  if(['POST','PUT'].includes(request.method) && Number(request.headers.get('content-length')||0)>24000)return json({error:'Requête trop volumineuse'},413);
+  if(['POST','PUT'].includes(request.method) && Number(request.headers.get('content-length')||0)>(new URL(request.url).pathname==='/api/project'?48000:24000))return json({error:'Requête trop volumineuse'},413);
   if(!env.DB)return json({error:'Base de données indisponible'},503);
   const db=env.DB;const origin=request.headers.get('origin');if(request.method!=='GET'&&origin&&origin!==new URL(request.url).origin)return json({error:'Origine non autorisée'},403);const path=new URL(request.url).pathname.replace(/^\/api\/?/,'');const method=request.method;
   if(method==='GET'&&path==='health'){const probe=await db.prepare('SELECT 1 AS ok').first();return json({ok:probe?.ok===1,service:'codeduo-auth'});}
