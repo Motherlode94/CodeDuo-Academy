@@ -172,3 +172,11 @@ Routes ajoutées : `GET /api/progress`, `PUT /api/progress` (validation d'une le
 5. Contrôler sur le domaine publié la progression et le brouillon de deux étudiants distincts, sans réutiliser leurs données locales.
 
 **Limites** : la compilation C# reste non disponible ; les exercices et les projets personnels ne disposent pas encore d'une correction serveur ni d'un espace collaboratif. La récupération d'accès nécessite toujours une procédure administrateur ou un futur fournisseur d'e-mails transactionnels. Ne pas créer de comptes d'essai dans la base réelle sans autorisation.
+
+## Atelier multi-fichiers HTML / CSS / JavaScript (développement)
+
+La page `atelier-projet.html` contient un véritable éditeur à trois fichiers (`index.html`, `style.css`, `main.js`) avec export individuel, prévisualisation et trois exercices contrôlés par des **tests DOM et de clics**. L'aperçu utilise une iframe à origine opaque (`sandbox="allow-scripts"`) et une CSP bloquant les requêtes réseau ; cela réduit les risques, mais ne constitue pas un environnement sécurisé pour des programmes arbitraires hostiles.
+
+Le projet est sauvegardé dans la table D1 `student_projects` pour les comptes connectés et uniquement dans le navigateur pour les invités. L'API `GET/PUT /api/project` applique une limite de **16 000 caractères par fichier**, un budget maximal de corps de requête et l'identifiant issu de la session, jamais de la requête du client. Le module `js/project-checks.js` vérifie effectivement des éléments du DOM et la réaction des boutons. Il s'agit d'évaluations formatives, pas de certifications.
+
+**Avant le déploiement** : appliquer `migrations/0003_student_projects.sql` sur une base D1 de test, vérifier le fonctionnement dans un déploiement Pages de prévisualisation, puis déployer la migration en production avant de fusionner la branche. Pas de compilation C#/Python, de projets synchronisés en temps réel ou de tests résistants au code malveillant pour cette version.
