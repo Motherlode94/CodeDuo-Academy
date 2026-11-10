@@ -3,11 +3,11 @@ const storage = {
  getItem(key) { try { return window.localStorage.getItem(key); } catch { return null; } },
  setItem(key, value) { try { window.localStorage.setItem(key, value); return true; } catch { return false; } },
  removeItem(key) { try { window.localStorage.removeItem(key); } catch {} }
-};const samples={javascript:"// Premier programme\nconst prenom = 'CodeDuo';\nlet points = 5;\nconsole.log('Bienvenue ' + prenom);\nconsole.log('Points :', points + 3);",html:"<h1>Bonjour CodeDuo !</h1>\n<p>Ma première page web.</p>\n<button onclick=\"document.querySelector('p').textContent='Bravo !'\">Clique ici</button>",csharp:"using System;\n\npublic class Program\n{\n    public static void Main()\n    {\n        Console.WriteLine(\"Bonjour CodeDuo !\");\n    }\n}"};let profile=storage.getItem('codeduo-demo-profile')||'';const code=$('editor'),lang=$('language'),pre=$('highlight'),highlight=$('highlightCode');const getLang=()=>lang.value==='html'?'markup':lang.value==='csharp'?'csharp':'javascript';function paint(){let src=code.value+'\n';const l=getLang();if(window.Prism?.languages?.[l])highlight.innerHTML=Prism.highlight(src,Prism.languages[l],l);else highlight.textContent=src}let draftTimer=null,editorVersion=0;
+};const samples={javascript:"// Premier programme\nconst prenom = 'CodeDuo';\nlet points = 5;\nconsole.log('Bienvenue ' + prenom);\nconsole.log('Points :', points + 3);",html:"<h1>Bonjour CodeDuo !</h1>\n<p>Ma première page web.</p>\n<button onclick=\"document.querySelector('p').textContent='Bravo !'\">Clique ici</button>",csharp:"using System;\n\npublic class Program\n{\n    public static void Main()\n    {\n        Console.WriteLine(\"Bonjour CodeDuo !\");\n    }\n}"};let profile=storage.getItem('codeduo-demo-profile')||'';const code=$('editor'),lang=$('language'),pre=$('highlight'),highlight=$('highlightCode');const getLang=()=>lang.value==='html'?'markup':lang.value==='csharp'?'csharp':'javascript';function paint(){let src=code.value+'\n';const l=getLang();if(window.Prism?.languages?.[l])highlight.innerHTML=Prism.highlight(src,Prism.languages[l],l);else highlight.textContent=src}let draftTimer=null,editorVersion=0,activeEditorLanguage='javascript';
 async function setLanguage(name){
- if(draftTimer){clearTimeout(draftTimer);draftTimer=null;await flushDraft()}
- lang.value=name;editorVersion++;
- const version=editorVersion;
+ const version=++editorVersion;
+ if(draftTimer){clearTimeout(draftTimer);draftTimer=null;await flushDraft(activeEditorLanguage,code.value)}
+ activeEditorLanguage=name;lang.value=name;
  $('openCSharpCompiler').hidden=name!=='csharp';
  $('filelabel').textContent=name==='html'?'index.html':name==='csharp'?'Program.cs':'main.js';
  code.value=samples[name];paint();$('preview').hidden=true;$('output').hidden=false;
@@ -17,10 +17,9 @@ async function setLanguage(name){
   code.value=draft??samples[name];paint();$('saveStatus').textContent=window.CodeDuoSync.isAuthenticated()?'Brouillon du compte étudiant':'Brouillon local sur cet appareil';
  }catch{if(version===editorVersion)$('saveStatus').textContent='Brouillon serveur inaccessible : exporte ton code pour le conserver.'}
 }
-async function flushDraft(){
- const language=lang.value,source=code.value;
+async function flushDraft(language=activeEditorLanguage,source=code.value){
  try{await window.CodeDuoSync.saveDraft(language,source);
-  if(language===lang.value)$('saveStatus').textContent=window.CodeDuoSync.isAuthenticated()?'Enregistré dans ton compte':'Brouillon local enregistré';
+  if(language===activeEditorLanguage)$('saveStatus').textContent=window.CodeDuoSync.isAuthenticated()?'Enregistré dans ton compte':'Brouillon local enregistré';
  }catch{if(language===lang.value)$('saveStatus').textContent='Sauvegarde impossible : exporte ton code pour le conserver.'}
 }
 lang.onchange=()=>setLanguage(lang.value);
