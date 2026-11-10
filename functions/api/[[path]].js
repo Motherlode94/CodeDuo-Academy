@@ -57,7 +57,7 @@ async function handleRequest({request,env}) {
       if(request.headers.get('upgrade')?.toLowerCase()!=='websocket')return json({error:'WebSocket requis'},426);
       if(!env.PAIR_REALTIME||!env.PAIR_SECRET)return json({error:'Collaboration non configurée'},503);
       const expiry=now+30000,payload=JSON.stringify({room,user:actor.id,exp:expiry,nonce:crypto.randomUUID()});
-      const bytes=enc.encode(payload),key=await crypto.subtle.importKey('raw',enc.encode(env.PAIR_SECRET),'HMAC',{hash:'SHA-256'},false,['sign']);
+      const bytes=enc.encode(payload),key=await crypto.subtle.importKey('raw',enc.encode(env.PAIR_SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);
       const mac=new Uint8Array(await crypto.subtle.sign('HMAC',key,bytes));
       const b64=arr=>btoa(String.fromCharCode(...arr)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
       return env.PAIR_REALTIME.fetch('https://internal/connect',{headers:{upgrade:'websocket','x-codeduo-ticket':b64(bytes)+'.'+b64(mac)}});
