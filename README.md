@@ -157,3 +157,18 @@ Aucune licence d'utilisation ou de redistribution n'est précisée dans ce READM
 - `css/mao.css` : styles spécifiques ; `js/mao-courses.js`, `js/mao-learning.js`, `js/mao-studio.js` : cours et mécanique audio.
 
 Les comptes CodeDuo existants (étudiant et administrateur) restent les mêmes : **aucun nouvel identifiant ni mot de passe n'est généré pour la MAO**. L'accès à la connexion se fait via `connexion.html`. Les cours et le séquenceur sont pour l'instant accessibles publiquement ; la sauvegarde du pattern et de la progression utilise `localStorage` et non D1. Il ne s'agit pas d'un DAW professionnel, aucun export WAV, aucun VST ni enregistrement microphone. Les mots de passe ne doivent jamais être ajoutés au code public.
+
+## Synchronisation des étudiants (PR — déploiement contrôlé)
+
+Le nouveau schéma `migrations/0002_student_learning.sql` ajoute **deux tables D1** : `student_progress` et `student_drafts`, associées à `users.id`. Il conserve les utilisateurs et mots de passe existants. Aucune donnée ne doit être migrée depuis un navigateur collectif vers un compte sans consentement explicite : les anciennes données `localStorage` restent accessibles uniquement en mode invité, tandis qu'une session authentifiée utilise exclusivement l'API.
+
+Routes ajoutées : `GET /api/progress`, `PUT /api/progress` (validation d'une leçon `code` 1–14 ou `mao` 1–12), `GET /api/drafts` et `PUT /api/drafts` (JavaScript, HTML, C#, 20 000 caractères maximum). Toutes exigent une session valide et chaque requête SQL est limitée à l'identifiant de la session. Une progression n'est pas effacée par la synchronisation.
+
+**Procédure avant fusion/déploiement** :
+1. Sauvegarder la base D1 et identifier son ID depuis le compte Cloudflare.
+2. Exécuter la migration dans une **base D1 de test** et vérifier ses quatre requêtes avec deux comptes séparés.
+3. Exécuter `node --test tests/*.test.mjs` et vérifier l'inscription/connexion/session/logout dans un environnement Pages de test avec binding `DB`.
+4. Appliquer ensuite la migration à la base D1 de production **avant de publier le front-end/API mis à jour**, en utilisant les outils de migration Cloudflare autorisés. Ne pas confondre le binding `DB` et le nom physique de la base.
+5. Contrôler sur le domaine publié la progression et le brouillon de deux étudiants distincts, sans réutiliser leurs données locales.
+
+**Limites** : la compilation C# reste non disponible ; les exercices et les projets personnels ne disposent pas encore d'une correction serveur ni d'un espace collaboratif. La récupération d'accès nécessite toujours une procédure administrateur ou un futur fournisseur d'e-mails transactionnels. Ne pas créer de comptes d'essai dans la base réelle sans autorisation.
