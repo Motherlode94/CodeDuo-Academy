@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atelier Projets — CodeDuo Academy</title><link rel="stylesheet" href="./css/style.css"><link rel="stylesheet" href="./css/project-workspace.css"></head>
+<body><header class="header"><a class="brand" href="./index.html"><span class="mark">⌘</span> Code<span>Duo</span></a><nav><a href="./index.html">Accueil</a><a href="./cours.html">Cours</a><a href="./projets.html">Défis</a><a href="./connexion.html">Connexion</a></nav></header>
+<main class="project-main">
+<section class="project-intro"><span class="eyebrow">APPRENDRE EN CONSTRUISANT</span><h1>Atelier de projet Web</h1>
+<p>Trois fichiers, un vrai aperçu et des tests qui vérifient ce que fait ton programme. Les travaux des étudiants connectés sont sauvegardés sur leur compte ; les essais anonymes restent sur cet appareil.</p></section>
+<div class="project-toolbar"><label for="exercise">Exercice</label><select id="exercise"><option value="introduction">01 · Ma première page</option><option value="interaction">02 · Réagir au clic</option><option value="compteur">03 · Mon compteur</option></select>
+<button id="loadExample" class="small" type="button">Charger l'exemple</button><button id="runProject" class="primary small" type="button">▶ Tester mon projet</button>
+<button id="saveProject" class="small" type="button">Enregistrer</button><button id="exportProject" class="small" type="button">Exporter les 3 fichiers</button>
+</div>
+<div class="project-grid"><section class="project-panel"><div class="project-filetabs" role="tablist" aria-label="Fichiers du projet">
+<button type="button" role="tab" id="file-html" data-file="html" aria-selected="true">index.html</button>
+<button type="button" role="tab" id="file-css" data-file="css" aria-selected="false">style.css</button>
+<button type="button" role="tab" id="file-javascript" data-file="javascript" aria-selected="false">main.js</button></div>
+<label for="projectEditor" class="editor-label" id="editorLabel">index.html</label><textarea id="projectEditor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Éditeur du fichier sélectionné"></textarea>
+<div id="projectStatus" role="status" aria-live="polite" class="project-status">Chargement du projet…</div></section>
+<section class="project-panel"><div class="project-results-tabs"><strong>Aperçu Web isolé</strong><span>HTML + CSS + JavaScript</span></div>
+<iframe id="projectPreview" title="Aperçu du projet dans une origine isolée" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+<h2>Console et validation</h2><pre id="projectConsole" aria-live="polite" class="project-console">Prêt.</pre><div id="projectTests" class="project-tests" role="status" aria-live="polite"></div></section></div>
+<details class="project-help"><summary>Comment fonctionne cet atelier ?</summary>
+<p>La page assemble <code>index.html</code>, <code>style.css</code> et <code>main.js</code> dans un cadre isolé sans accès au compte ni au stockage principal. Les tests examinent le DOM et les interactions. Cette démonstration n'est pas un environnement d'exécution sécurisé pour tout code hostile et ne compile pas C# ou Python. Une sauvegarde ne prouve pas que l'exercice est réussi.</p></details>
+</main><script src="./js/student-sync.js"></script><script src="./js/project-workspace.js"></script></body></html>
