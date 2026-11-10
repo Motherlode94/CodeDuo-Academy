@@ -1,3 +1,29 @@
 (async()=>{'use strict';
-try {const r=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});if(!r.ok)throw Error('backend');const d=await r.json();if(!d.user){location.replace('./connexion.html');return;}document.getElementById('studentAlias').value=d.user.username;document.getElementById('studentAlias').readOnly=true;document.getElementById('profileStatus').textContent='Session sécurisée : '+d.user.username+' ('+d.user.role+').';document.getElementById('profileForm').hidden=true;document.getElementById('clearProfile').textContent='Me déconnecter';document.getElementById('clearProfile').onclick=async()=>{await fetch('/api/logout',{method:'POST',credentials:'same-origin'});location.replace('./connexion.html');};}catch {document.getElementById('profileStatus').textContent='Service de connexion indisponible. Réessaie plus tard.';document.getElementById('profileForm').hidden=true;return;}
-const $=id=>document.getElementById(id);const read=k=>{try{return localStorage.getItem(k)}catch{return null}};const write=(k,v)=>{try{localStorage.setItem(k,v);return true}catch{return false}};const form=$('profileForm'),alias=$('studentAlias'),status=$('profileStatus');alias.value=read('codeduo-demo-profile')||'';form.addEventListener('submit',e=>{e.preventDefault();const name=alias.value.trim();if(name.length<2){status.textContent='Indique au moins deux caractères.';return}status.textContent=write('codeduo-demo-profile',name)?'Profil local enregistré : '+name:'Le navigateur empêche la sauvegarde locale.'});document.getElementById('passwordForm').onsubmit=async e=>{e.preventDefault();const output=document.getElementById('passwordStatus');output.textContent='Mise à jour…';try{const r=await fetch('/api/password',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({currentPassword:document.getElementById('currentPassword').value,newPassword:document.getElementById('newPassword').value})});const d=await r.json();output.textContent=d.notice||d.error||'Erreur';if(r.ok)setTimeout(()=>location.replace('./connexion.html'),1500)}catch{output.textContent='Service indisponible.'}};let done=[];try{const v=JSON.parse(read('codeduo-learning-completed')||'[]');if(Array.isArray(v))done=v.filter(x=>Number.isInteger(x)&&x>=1&&x<=14)}catch{}$('boardCount').textContent=done.length+' / 14 chapitres validés sur cet appareil';$('boardProgress').style.width=(100*done.length/14)+'%';})();
+ const $=id=>document.getElementById(id),form=$('profileForm'),alias=$('studentAlias'),status=$('profileStatus');
+ form.hidden=true;
+ let user;
+ try{const response=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});
+  if(!response.ok)throw Error('Service de connexion indisponible');
+  user=(await response.json()).user;
+  if(!user){location.replace('./connexion.html');return}
+ }catch{status.textContent='Service de connexion indisponible. Réessaie plus tard.';return}
+ alias.value=user.username;alias.readOnly=true;
+ status.textContent='Session sécurisée : '+user.username+' ('+user.role+').';
+ $('clearProfile').textContent='Me déconnecter';
+ $('clearProfile').onclick=async()=>{
+  try{const r=await fetch('/api/logout',{method:'POST',credentials:'same-origin'});if(!r.ok)throw Error('logout');location.replace('./connexion.html')}
+  catch{status.textContent='Déconnexion impossible : réessaie.'}
+ };
+ $('passwordForm').onsubmit=async e=>{
+  e.preventDefault();const output=$('passwordStatus');output.textContent='Mise à jour…';
+  try{const r=await fetch('/api/password',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},
+   body:JSON.stringify({currentPassword:$('currentPassword').value,newPassword:$('newPassword').value})});
+   const data=await r.json();output.textContent=data.notice||data.error||'Erreur';
+   if(r.ok)location.replace('./connexion.html');
+  }catch{output.textContent='Service indisponible.'}
+ };
+ try{const done=await window.CodeDuoSync.completed('code');
+  $('boardCount').textContent=done.length+' / 14 chapitres validés '+(window.CodeDuoSync.isAuthenticated()?'sur ton compte':'sur cet appareil');
+  $('boardProgress').style.width=(100*done.length/14)+'%';
+ }catch{$('boardCount').textContent='Progression temporairement indisponible.';$('boardProgress').style.width='0%'}
+})();
