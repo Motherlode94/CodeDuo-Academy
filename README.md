@@ -99,7 +99,7 @@ Le backend utilise notamment PBKDF2-SHA256 avec sel individuel, des cookies `Htt
 
 ## Stockage et progression
 
-Les **cours validés**, brouillons de l'éditeur et certaines données d'exercices sont encore enregistrés par `localStorage`. Ils ne sont **pas encore associés au compte D1 connecté**. Plusieurs profils utilisant le même navigateur peuvent donc voir les mêmes brouillons ou résultats. Une future migration devra enregistrer le travail de chaque étudiant par son ID serveur et vérifier les autorisations à chaque lecture/écriture.
+**Sur la branche de développement dédiée**, les cours validés et les brouillons de l'atelier sont associés à l'identifiant étudiant dans D1 après application de la migration. En mode invité, ils restent dans `localStorage`. Les petits exercices de démonstration et projets guidés conservent leurs données locales : leur synchronisation complète reste à faire. La production continue d'utiliser l'ancien comportement jusqu'à la migration et au déploiement de cette PR.
 
 ## WarLike Server et WarLike Mail
 
