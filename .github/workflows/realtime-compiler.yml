@@ -12,6 +12,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - run: dotnet build services/csharp-compiler/CodeDuo.Compiler.csproj --configuration Release
+      - run: bash scripts/test-csharp-compiler.sh
   realtime-syntax:
     runs-on: ubuntu-latest
     steps:
@@ -21,4 +22,4 @@ jobs:
           node-version: '22'
       - run: node --input-type=module --check < services/pair-realtime/src/index.js
       - run: node --check js/pair-client.js
-      - run: node --test tests/pair-csharp.test.mjs
+      - run: node --test tests/pair-csharp.test.mjs tests/pair-durable-object.test.mjs
