@@ -16,10 +16,41 @@ export async function onRequest(context) {
   }
 }
 async function handleRequest({request,env}) {
-  if(request.method==='POST' && Number(request.headers.get('content-length')||0)>16384)return json({error:'Requête trop volumineuse'},413);
+  if(['POST','PUT'].includes(request.method) && Number(request.headers.get('content-length')||0)>24000)return json({error:'Requête trop volumineuse'},413);
   if(!env.DB)return json({error:'Base de données indisponible'},503);
   const db=env.DB;const origin=request.headers.get('origin');if(request.method!=='GET'&&origin&&origin!==new URL(request.url).origin)return json({error:'Origine non autorisée'},403);const path=new URL(request.url).pathname.replace(/^\/api\/?/,'');const method=request.method;
   if(method==='GET'&&path==='health'){const probe=await db.prepare('SELECT 1 AS ok').first();return json({ok:probe?.ok===1,service:'codeduo-auth'});}
+  // User-owned learning data. Every query is scoped to the authenticated session.
+  if(['progress','drafts'].includes(path)){
+    const actor=await current(request,db);
+    if(!actor)return json({error:'Connexion requise'},401);
+    if(!['GET','PUT'].includes(method))return json({error:'Méthode non autorisée'},405,{'allow':'GET, PUT'});
+    if(method==='GET'){
+      if(path==='progress'){
+        const rows=await db.prepare('SELECT track,lesson_id,completed_at FROM student_progress WHERE user_id=? ORDER BY track,lesson_id').bind(actor.id).all();
+        return json({completed:rows.results||[]});
+      }
+      const rows=await db.prepare('SELECT language,source,updated_at FROM student_drafts WHERE user_id=? ORDER BY language').bind(actor.id).all();
+      return json({drafts:rows.results||[]});
+    }
+    let raw;try{raw=await request.text()}catch{return json({error:'Requête invalide'},400)}
+    if(raw.length>24000)return json({error:'Données trop volumineuses'},413);
+    let body;try{body=JSON.parse(raw)}catch{return json({error:'JSON invalide'},400)}
+    if(path==='progress'){
+      const track=body?.track,lessonId=body?.lessonId;
+      if(!['code','mao'].includes(track)||!Number.isInteger(lessonId)||lessonId<1||lessonId>(track==='code'?14:12)||body?.completed!==true)
+        return json({error:'Progression invalide'},400);
+      await db.prepare('INSERT INTO student_progress(user_id,track,lesson_id,completed_at) VALUES(?,?,?,?) ON CONFLICT(user_id,track,lesson_id) DO NOTHING')
+        .bind(actor.id,track,lessonId,Date.now()).run();
+      return json({ok:true,track,lessonId});
+    }
+    const language=body?.language,source=body?.source;
+    if(!['javascript','html','csharp'].includes(language)||typeof source!=='string'||source.length>20000)
+      return json({error:'Brouillon invalide (20 000 caractères maximum)'},400);
+    await db.prepare('INSERT INTO student_drafts(user_id,language,source,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,language) DO UPDATE SET source=excluded.source,updated_at=excluded.updated_at')
+      .bind(actor.id,language,source,Date.now()).run();
+    return json({ok:true,language});
+  }
   if(method==='GET'&&path==='users'){const actor=await current(request,db);if(!actor||actor.role!=='admin')return json({error:'Accès réservé'},403);const rows=await db.prepare('SELECT id, username, role, created_at FROM users ORDER BY created_at DESC LIMIT 100').all();return json({users:rows.results||[]});}
   if(method==='GET'&&path==='me'){const user=await current(request,db);return json({user:user||null});}
   if(method==='POST'&&path==='password'){const user=await current(request,db);if(!user)return json({error:'Connexion requise'},401);let b;try{b=await request.json()}catch{return json({error:'Requête invalide'},400)}const old=String(b?.currentPassword||''),next=String(b?.newPassword||'');if(next.length<12||next.length>200||old.length>200)return json({error:'Mot de passe trop court ou invalide'},400);const record=await db.prepare('SELECT salt,password_hash FROM users WHERE id=?').bind(user.id).first();if(!record||(await derive(old,record.salt))!==record.password_hash)return json({error:'Mot de passe actuel incorrect'},403);const salt=crypto.randomUUID(),hash=await derive(next,salt);await db.prepare('UPDATE users SET salt=?, password_hash=? WHERE id=?').bind(salt,hash,user.id).run();await db.prepare('DELETE FROM sessions WHERE user_id=?').bind(user.id).run();return json({ok:true,notice:'Mot de passe changé. Reconnectez-vous.'},200,{'set-cookie':stripCookie});}
