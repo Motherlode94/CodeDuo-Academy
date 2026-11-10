@@ -20,6 +20,32 @@ async function handleRequest({request,env}) {
   if(!env.DB)return json({error:'Base de données indisponible'},503);
   const db=env.DB;const origin=request.headers.get('origin');if(request.method!=='GET'&&origin&&origin!==new URL(request.url).origin)return json({error:'Origine non autorisée'},403);const path=new URL(request.url).pathname.replace(/^\/api\/?/,'');const method=request.method;
   if(method==='GET'&&path==='health'){const probe=await db.prepare('SELECT 1 AS ok').first();return json({ok:probe?.ok===1,service:'codeduo-auth'});}
+  if(path==='project'){
+    const actor=await current(request,db);
+    if(!actor)return json({error:'Connexion requise'},401);
+    if(!['GET','PUT'].includes(method))return json({error:'Méthode non autorisée'},405,{'allow':'GET, PUT'});
+    const projectId='web-starter';
+    if(method==='GET'){
+      const row=await db.prepare('SELECT html,css,javascript,updated_at FROM student_projects WHERE user_id=? AND project_id=?')
+        .bind(actor.id,projectId).first();
+      return json({project:row||null});
+    }
+    // Enforce a hard body budget even when Content-Length is not provided.
+    const sizeLimit=48000,reader=request.body?.getReader();
+    if(!reader)return json({error:'Corps manquant'},400);
+    let bytes=0,chunks=[];while(true){const {done,value}=await reader.read();if(done)break;bytes+=value.byteLength;
+      if(bytes>sizeLimit){await reader.cancel().catch(()=>{});return json({error:'Projet trop volumineux'},413)}
+      chunks.push(value)}
+    const data=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){data.set(chunk,offset);offset+=chunk.length}
+    let payload;try{payload=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(data))}catch{return json({error:'Projet JSON invalide'},400)}
+    const html=payload?.html,css=payload?.css,javascript=payload?.javascript;
+    if(typeof html!=='string'||typeof css!=='string'||typeof javascript!=='string'
+      ||html.length>16000||css.length>16000||javascript.length>16000)
+      return json({error:'Fichiers invalides (16 000 caractères maximum par fichier)'},400);
+    await db.prepare('INSERT INTO student_projects(user_id,project_id,html,css,javascript,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(user_id,project_id) DO UPDATE SET html=excluded.html,css=excluded.css,javascript=excluded.javascript,updated_at=excluded.updated_at')
+      .bind(actor.id,projectId,html,css,javascript,Date.now()).run();
+    return json({ok:true,updatedAt:Date.now()});
+  }
   // User-owned learning data. Every query is scoped to the authenticated session.
   if(['progress','drafts'].includes(path)){
     const actor=await current(request,db);
